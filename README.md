@@ -1,5 +1,5 @@
 # Requirements
-python==3.9
+python==3.9.6
 <br>flask==2.0.1
 <br>opencv-python
 <br>atomicwrites==1.2.1
