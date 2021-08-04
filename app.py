@@ -1,58 +1,39 @@
-from flask import Flask, jsonify, request, current_app
-from sqlalchemy import create_engine, text
+import config
 
+from flask         import Flask
+from sqlalchemy    import create_engine
+from flask_cors    import CORS
 
+from model   import UserDao
+from service import UserService
+from view    import create_endpoints
+
+class Services:
+    pass
+
+################################
+# Create App
+################################
 def create_app(test_config = None):
-    """
-    To do:
-    database connect!
-    """
     app = Flask(__name__)
+
+    CORS(app)
 
     if test_config is None:
         app.config.from_pyfile("config.py")
     else:
         app.config.update(test_config)
+
+    database = create_engine(app.config['DB_URL'], encoding = 'utf-8', max_overflow = 0)
+
+    ## Persistenace Layer
+    user_dao  = UserDao(database)
     
-    database = create_engine(app.config['DB_URL'], encoding = 'utf-8', max_overflow=0)
-    app.database = database
+    ## Business Layer
+    services = Services
+    services.user_service  = UserService(user_dao, config)
 
-    @app.route("/sign-up", methods=['POST'])
-    def sign_up():
-        new_user = request.json
-        new_user_id = app.database.execute(text("""
-        INSERT INTO users (
-            name,
-            email,
-            profile,
-            hashed_password
-        ) VALUES (
-            :name,
-            :email,
-            :profile,
-            :password
-        )
-        """), new_user).lastrowid
-
-        row = current_app.database.execute(text("""
-        SELECT
-            id,
-            name,
-            email,
-            profile
-        FROM users
-        WHERE id = :user_id
-        """), {
-            'user_id' : new_user_id
-        }).fetchone()
-
-        created_user ={
-            'id'    : row['id'],
-            'name'  : row['name'],
-            'email' : row['email'],
-            'profile':row['profile']
-        } if row else None
-
-        return jsonify(created_user)
+    ## 엔드포인트들을 생성
+    create_endpoints(app, services)
 
     return app
