@@ -40,7 +40,9 @@ def login_required(f):
 def create_endpoints(app, services):
     app.json_encoder = CustomJSONEncoder
 
+    # add service list
     user_service  = services.user_service
+    motion_service = services.motion_service
 
     @app.route("/ping", methods=['GET'])
     def ping():
@@ -70,7 +72,12 @@ def create_endpoints(app, services):
         else:
             return '', 401
     
-    @app.route('/test/<int:user_id>', methods=['GET'])
+    @app.route('/detected', methods=['POST'])
     @login_required
-    def test(user_id):
-        return '', 200
+    def detected():
+        dectected = request.json
+        
+        if motion_service.detected_motion(detected):
+            return '움직임이 감지됐습니다.'
+        
+

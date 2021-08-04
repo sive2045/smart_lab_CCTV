@@ -4,8 +4,8 @@ from flask         import Flask
 from sqlalchemy    import create_engine
 from flask_cors    import CORS
 
-from model   import UserDao
-from service import UserService
+from model   import UserDao, MotionDao
+from service import UserService, MotionService
 from view    import create_endpoints
 
 class Services:
@@ -28,10 +28,12 @@ def create_app(test_config = None):
 
     ## Persistenace Layer
     user_dao  = UserDao(database)
+    motion_dao = MotionDao(database)
     
     ## Business Layer
     services = Services
     services.user_service  = UserService(user_dao, config)
+    services.motion_service = MotionService(motion_dao, config)
 
     ## 엔드포인트들을 생성
     create_endpoints(app, services)
