@@ -1,6 +1,6 @@
 import jwt
 
-from flask      import request, jsonify, current_app, Response, g
+from flask      import request, jsonify, current_app, Response, g, render_template
 from flask.json import JSONEncoder
 from functools  import wraps
 
@@ -47,6 +47,10 @@ def create_endpoints(app, services):
     @app.route("/ping", methods=['GET'])
     def ping():
         return "pong"
+    
+    @app.route("/")
+    def main():
+        return render_template('main.html')
 
     @app.route("/sign-up", methods=['POST'])
     def sign_up():
