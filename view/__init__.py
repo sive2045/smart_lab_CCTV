@@ -50,7 +50,7 @@ def create_endpoints(app, services):
     
     @app.route("/")
     def main():
-        return render_template('main.html')
+        return render_template('login.html')
 
     @app.route("/sign-up", methods=['POST'])
     def sign_up():
