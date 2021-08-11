@@ -1,8 +1,10 @@
 import jwt
 
-from flask      import request, jsonify, current_app, Response, g, render_template
+from flask      import request, jsonify, current_app, Response, g, render_template, url_for
 from flask.json import JSONEncoder
 from functools  import wraps
+
+from werkzeug.utils import redirect
 
 ## Default JSON encoder는 set를 JSON으로 변환할 수 없다.
 ## 그럼으로 커스텀 엔코더를 작성해서 set을 list로 변환하여
@@ -48,9 +50,10 @@ def create_endpoints(app, services):
     def ping():
         return "pong"
     
-    @app.route("/")
+    @app.route("/main")
+    @login_required
     def main():
-        return render_template('login.html')
+        return render_template('main.html')
 
     @app.route("/sign-up", methods=['POST'])
     def sign_up():
@@ -59,22 +62,29 @@ def create_endpoints(app, services):
 
         return jsonify(new_user)
         
-    @app.route('/login', methods=['POST'])
+    @app.route('/login', methods=['GET', 'POST'])
     def login():
-        credential = request.json
-        authorized = user_service.login(credential) 
-
-        if authorized:
-            user_credential = user_service.get_user_id_and_password(credential['email'])
-            user_id         = user_credential['id']
-            token           = user_service.generate_access_token(user_id)
-
-            return jsonify({
-                'user_id'      : user_id,
-                'access_token' : token
-            })
+        if request.method=='GET':
+            access_token = request.headers.get('Authorization') 
+            if access_token is None:
+                return render_template('login.html')
+            else:
+                return redirect(url_for('main'))
         else:
-            return '', 401
+            credential = request.form
+            #print(credential)
+            authorized = user_service.login(credential) 
+
+            if authorized:
+                user_credential = user_service.get_user_id_and_password(credential['email'])
+                user_id         = user_credential['id']
+                token           = user_service.generate_access_token(user_id)
+                return jsonify({
+                    'user_id'      : user_id,
+                    'access_token' : token
+                })
+            else:
+                return redirect(url_for('login'))
     
     @app.route('/detected', methods=['POST'])
     @login_required
